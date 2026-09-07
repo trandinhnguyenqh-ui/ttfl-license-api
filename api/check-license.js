@@ -1,47 +1,67 @@
 const { MongoClient } = require('mongodb');
+const crypto = require('crypto');
 
 export default async function handler(req, res) {
-    // 1. Chỉ nhận lệnh từ AutoCAD gửi lên
     if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Chỉ chấp nhận phương thức POST' });
+        return res.status(405).json({ success: false, message: 'Chỉ chấp nhận POST' });
     }
 
     const { key, hwid } = req.body;
     if (!key || !hwid) {
-        return res.status(400).json({ success: false, message: 'Thiếu thông tin Key hoặc Mã máy (HWID)!' });
+        return res.status(400).json({ success: false, message: 'Thiếu Key hoặc HWID!' });
     }
 
     let client;
-
     try {
-        // 2. KHỞI TẠO KẾT NỐI BÊN TRONG HÀM (Chống treo Vercel)
-        const uri = process.env.MONGODB_URI;
-        client = new MongoClient(uri);
+        client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
+        const collection = client.db('TTFL_Database').collection('Licenses');
 
-        const database = client.db('TTFL_Database');
-        const collection = database.collection('Licenses');
+        const safeKey = key.trim().toUpperCase();
+        const license = await collection.findOne({ LicenseKey: safeKey });
 
-        // 3. Tìm Key trong Database
-        const license = await collection.findOne({ LicenseKey: key });
-
-        // 4. Các lớp kiểm tra bảo mật
         if (!license) {
             return res.status(404).json({ success: false, message: 'Key bản quyền không tồn tại!' });
         }
 
+        // Kiểm tra HWID (Chỉ khóa Mainboard, đổi ổ cứng vô tư)
         if (license.HWID && license.HWID !== "" && license.HWID !== hwid) {
-            return res.status(403).json({ success: false, message: 'Key này đã được kích hoạt trên một máy tính khác!' });
+            return res.status(403).json({ success: false, message: 'Key này đã được kích hoạt trên thiết bị khác (Sai Mainboard)!' });
         }
 
-        // 5. Nếu mọi thứ Ok -> Cấp phép
-        return res.status(200).json({ success: true, message: 'Xác thực bản quyền TTFL thành công!' });
+        // Lần đầu kích hoạt -> Lưu HWID vào Database
+        if (!license.HWID || license.HWID === "") {
+            await collection.updateOne({ LicenseKey: safeKey }, { $set: { HWID: hwid } });
+        }
+
+        // 1. TẠO PAYLOAD (Giấy thông hành offline 10 ngày)
+        const payloadObject = {
+            key: safeKey,
+            hwid: hwid,
+            validUntil: Date.now() + (10 * 24 * 60 * 60 * 1000), // Tính theo mili-giây
+            features: ["MENU_TONG", "BOCPCCC", "RAIEXIT"]
+        };
+        const payloadString = JSON.stringify(payloadObject);
+
+        // 2. KÝ BẰNG PRIVATE KEY
+        // Xử lý lỗi Vercel tự động làm mất ký tự xuống dòng của biến môi trường
+        const privateKey = process.env.RSA_PRIVATE_KEY.replace(/\\n/g, '\n'); 
+        
+        const sign = crypto.createSign('SHA256');
+        sign.update(payloadString);
+        sign.end();
+        const signature = sign.sign(privateKey, 'base64');
+
+        // 3. TRẢ VỀ CHO C#
+        return res.status(200).json({
+            success: true,
+            payload: payloadString,
+            signature: signature
+        });
 
     } catch (error) {
-        // Bắt lỗi rõ ràng nếu sai link MongoDB
         return res.status(500).json({ success: false, message: 'Lỗi máy chủ: ' + error.message });
     } finally {
-        // 6. LUÔN LUÔN ĐÓNG CỬA SAU KHI DÙNG XONG (Triệt tiêu 100% lỗi treo 30s)
         if (client) {
             await client.close();
         }
