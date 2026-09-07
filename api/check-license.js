@@ -47,11 +47,24 @@ export default async function handler(req, res) {
         }
 
         // ==========================================
+        // ==========================================
         // 3. KIỂM TRA NGÀY HẾT HẠN THỰC TẾ TRONG DATABASE
         // ==========================================
         let expirationTime = null;
         if (license.ExpirationDate && license.ExpirationDate !== "") {
-            expirationTime = new Date(license.ExpirationDate).getTime();
+            // Chuyển mọi định dạng ngày bạn gõ (kể cả String) thành Unix Timestamp (mili giây)
+            let dateObj = new Date(license.ExpirationDate);
+            
+            // Xử lý trường hợp nếu bạn lỡ gõ sai định dạng ngày (VD: gõ 07/09 thay vì 09/07)
+            if (isNaN(dateObj.getTime())) {
+                const parts = license.ExpirationDate.split('-');
+                if (parts.length === 3) { // Giả định bạn gõ YYYY-MM-DD
+                    dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+            }
+
+            expirationTime = dateObj.getTime();
+
             if (Date.now() > expirationTime) {
                 return res.status(403).json({ success: false, message: 'Key bản quyền của bạn đã HẾT HẠN sử dụng!' });
             }
