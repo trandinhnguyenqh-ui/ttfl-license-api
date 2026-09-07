@@ -71,6 +71,7 @@ export default async function handler(req, res) {
             key: safeKey,
             hwid: hwid,
             validUntil: offlineLimit,
+            realExpiration: expirationTime, // <-- THÊM DÒNG NÀY VÀO ĐÂY
             features: ["MENU_TONG", "BOCPCCC", "RAIEXIT"]
         };
         const payloadString = JSON.stringify(payloadObject);
