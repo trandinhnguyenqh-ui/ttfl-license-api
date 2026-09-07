@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             return res.status(404).json({ success: false, message: 'Key bản quyền không tồn tại!' });
         }
 
-        // Kiểm tra HWID (Chỉ khóa Mainboard, đổi ổ cứng vô tư)
+        // Kiểm tra HWID (Chỉ khóa Mainboard)
         if (license.HWID && license.HWID !== "" && license.HWID !== hwid) {
             return res.status(403).json({ success: false, message: 'Key này đã được kích hoạt trên thiết bị khác (Sai Mainboard)!' });
         }
@@ -38,13 +38,12 @@ export default async function handler(req, res) {
         const payloadObject = {
             key: safeKey,
             hwid: hwid,
-            validUntil: Date.now() + (10 * 24 * 60 * 60 * 1000), // Tính theo mili-giây
+            validUntil: Date.now() + (10 * 24 * 60 * 60 * 1000),
             features: ["MENU_TONG", "BOCPCCC", "RAIEXIT"]
         };
         const payloadString = JSON.stringify(payloadObject);
 
         // 2. KÝ BẰNG PRIVATE KEY
-        // Xử lý lỗi Vercel tự động làm mất ký tự xuống dòng của biến môi trường
         const privateKey = process.env.RSA_PRIVATE_KEY.replace(/\\n/g, '\n'); 
         
         const sign = crypto.createSign('SHA256');
