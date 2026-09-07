@@ -72,7 +72,7 @@ export default async function handler(req, res) {
             hwid: hwid,
             validUntil: offlineLimit,
             realExpiration: expirationTime, // <-- THÊM DÒNG NÀY VÀO ĐÂY
-            features: ["MENU_TONG", "BOCPCCC", "RAIEXIT"]
+            features: ["ALL_FEATURES"]
         };
         const payloadString = JSON.stringify(payloadObject);
 
