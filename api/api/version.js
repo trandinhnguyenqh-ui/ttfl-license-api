@@ -1,0 +1,8 @@
+export default function handler(req, res) {
+  res.status(200).json({
+    Version: "1.0.1",
+    Url2024: "https://link-tai-file-dll-ban-2024-cua-ban.com/TTFL.dll",
+    Url2025: "https://link-tai-file-dll-ban-2025-cua-ban.com/TTFL.dll",
+    ReleaseNotes: "Cập nhật tính năng Trợ lý AI và Fix lỗi UI."
+  });
+}
