@@ -26,7 +26,9 @@ export default async function handler(req, res) {
         // ==========================================
         // 2. VERCEL TỰ ĐỘNG GHI CHÚ VÀO MONGODB
         // ==========================================
-        const currentTime = new Date().toISOString();
+        // Cộng thêm 7 tiếng (Múi giờ Việt Nam) và cắt gọt cho đẹp mắt
+const vnTime = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+const currentTime = vnTime.toISOString().replace('T', ' ').substring(0, 19);
 
         if (!license.HWID || license.HWID === "") {
             // Lần đầu kích hoạt -> Lưu HWID, Ngày Kích Hoạt, Thời gian mở và Tăng LaunchCount
