@@ -29,20 +29,30 @@ export default async function handler(req, res) {
         const currentTime = new Date().toISOString();
 
         if (!license.HWID || license.HWID === "") {
-            // Lần đầu kích hoạt -> Lưu HWID, Ngày Kích Hoạt và Lần Cuối Online
+            // Lần đầu kích hoạt -> Lưu HWID, Ngày Kích Hoạt, Thời gian mở và Tăng LaunchCount
             await collection.updateOne(
                 { LicenseKey: safeKey }, 
-                { $set: { 
-                    HWID: hwid, 
-                    ActivationDate: currentTime,
-                    LastSyncTime: currentTime
-                }}
+                { 
+                    $set: { 
+                        HWID: hwid, 
+                        ActivationDate: currentTime,
+                        LastSyncTime: currentTime,
+                        LastLaunchTime: currentTime // <-- Thêm thời gian mở lần đầu
+                    },
+                    $inc: { LaunchCount: 1 } // <-- Tạo và gán số lần mở là 1
+                }
             );
         } else {
-            // Đã kích hoạt rồi (AutoCAD tự đồng bộ ngầm) -> Chỉ cập nhật Lần Cuối Online
+            // Đã kích hoạt rồi -> Cập nhật thời gian mở gần nhất và Tăng LaunchCount
             await collection.updateOne(
                 { LicenseKey: safeKey }, 
-                { $set: { LastSyncTime: currentTime } }
+                { 
+                    $set: { 
+                        LastSyncTime: currentTime,
+                        LastLaunchTime: currentTime // <-- Cập nhật lại thời gian mở gần nhất
+                    },
+                    $inc: { LaunchCount: 1 } // <-- Tăng số lần mở lên 1 mỗi lần request
+                }
             );
         }
 
