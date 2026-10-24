@@ -3,7 +3,7 @@ export default function handler(req, res) {
     "Version": "1.0.2",
     "Url2024": "https://github.com/trandinhnguyenqh-ui/ttfl-license-api/raw/refs/heads/main/Update_2024.zip",
     "Url2025": "https://github.com/trandinhnguyenqh-ui/ttfl-license-api/raw/refs/heads/main/Update_2025.zip",
-    "Hash2024": "27636df0298d555f404260f80aed82c09642188753f8a4bc2737aa9a76707e32",
+    "Hash2024": "cfad2599386cdfda9cc6c893355e23f85d300af4f17b9524ee32697de2094be3",
     "Hash2025": ""
   });
 }
